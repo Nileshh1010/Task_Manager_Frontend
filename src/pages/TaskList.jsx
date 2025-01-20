@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from '../context/AuthContext';
+import { Calendar, Flag, LogOut, Plus, Check, Trash2 } from 'lucide-react';
 import "../assets/Tasks.css";
 
 const TaskManager = () => {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState({ title: "", priority: "High", deadline: "" });
   const navigate = useNavigate();
+  const { logout } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -39,6 +42,11 @@ const TaskManager = () => {
   }, [navigate]);
 
   const handleAddTask = async () => {
+    if (!newTask.title.trim()) {
+      alert("Please enter a task title");
+      return;
+    }
+
     const authToken = localStorage.getItem("authToken");
     try {
       const response = await fetch("http://127.0.0.1:5000/tasks/", {
@@ -90,6 +98,10 @@ const TaskManager = () => {
   };
 
   const handleDeleteTask = async (taskId) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) {
+      return;
+    }
+
     const authToken = localStorage.getItem("authToken");
     try {
       const response = await fetch(`http://127.0.0.1:5000/tasks/${taskId}`, {
@@ -111,33 +123,63 @@ const TaskManager = () => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return '#ef4444';
+      case 'medium':
+        return '#f59e0b';
+      case 'low':
+        return '#10b981';
+      default:
+        return '#6b7280';
+    }
+  };
+
   const upcomingTasks = tasks.filter((task) => task.status === "Upcoming");
   const completedTasks = tasks.filter((task) => task.status === "Completed");
 
   return (
     <div className="task-manager">
+      <div className="header">
+        <h2>Task Manager</h2>
+        <button className="logout-button" onClick={handleLogout} style={{ marginBottom: '10px' }}>
+          <LogOut size={18} />
+          Logout
+        </button>
+      </div>
+
       <div className="task-form">
-        <h2>TASK MANAGER</h2>
-        <input
-          type="text"
-          placeholder="Task Title"
-          value={newTask.title}
-          onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-        />
-        <select
-          value={newTask.priority}
-          onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
-        >
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-        </select>
-        <input
-          type="date"
-          value={newTask.deadline}
-          onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })}
-        />
-        <button onClick={handleAddTask}>Add Task</button>
+        <div className="form-grid">
+          <input
+            type="text"
+            placeholder="Enter task title"
+            value={newTask.title}
+            onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+          />
+          <select
+            value={newTask.priority}
+            onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
+          >
+            <option value="High">High Priority</option>
+            <option value="Medium">Medium Priority</option>
+            <option value="Low">Low Priority</option>
+          </select>
+          <input
+            type="date"
+            value={newTask.deadline}
+            onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })}
+          />
+          <button onClick={handleAddTask}>
+            <Plus size={18} />
+            Add Task
+          </button>
+        </div>
       </div>
 
       <div className="task-section">
@@ -146,24 +188,59 @@ const TaskManager = () => {
           {upcomingTasks.map((task) => (
             <div key={task.id} className="task-card">
               <h4>{task.title}</h4>
-              <p>Priority: {task.priority}</p>
-              <p>Deadline: {task.deadline}</p>
-              <button onClick={() => handleCompleteTask(task.id)}>Complete</button>
-              <button onClick={() => handleDeleteTask(task.id)}>Delete</button>
+              <div className="task-details">
+                <div className="priority" style={{ color: getPriorityColor(task.priority) }}>
+                  <Flag size={16} />
+                  <span>{task.priority} Priority</span>
+                </div>
+                <div className="deadline">
+                  <Calendar size={16} />
+                  <span>{task.deadline}</span>
+                </div>
+              </div>
+              <div className="task-actions">
+                <button onClick={() => handleCompleteTask(task.id)} className="complete-btn">
+                  <Check size={16} />
+                  Complete
+                </button>
+                <button onClick={() => handleDeleteTask(task.id)} className="delete-btn">
+                  <Trash2 size={16} />
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
+          {upcomingTasks.length === 0 && (
+            <p className="empty-message">No upcoming tasks</p>
+          )}
         </div>
 
         <div className="completed-tasks">
           <h3>Completed Tasks</h3>
           {completedTasks.map((task) => (
-            <div key={task.id} className="task-card">
+            <div key={task.id} className="task-card completed">
               <h4>{task.title}</h4>
-              <p>Priority: {task.priority}</p>
-              <p>Deadline: {task.deadline}</p>
-              <button onClick={() => handleDeleteTask(task.id)}>Delete</button>
+              <div className="task-details">
+                <div className="priority" style={{ color: getPriorityColor(task.priority) }}>
+                  <Flag size={16} />
+                  <span>{task.priority} Priority</span>
+                </div>
+                <div className="deadline">
+                  <Calendar size={16} />
+                  <span>{task.deadline}</span>
+                </div>
+              </div>
+              <div className="task-actions">
+                <button onClick={() => handleDeleteTask(task.id)} className="delete-btn">
+                  <Trash2 size={16} />
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
+          {completedTasks.length === 0 && (
+            <p className="empty-message">No completed tasks</p>
+          )}
         </div>
       </div>
     </div>

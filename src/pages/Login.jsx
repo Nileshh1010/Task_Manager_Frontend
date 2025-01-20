@@ -1,7 +1,7 @@
-// Updated Login.jsx
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { LogIn } from 'lucide-react';
 import "../assets/Login.css";
 
 const Login = () => {
@@ -34,27 +34,37 @@ const Login = () => {
   return (
     <div className="container">
       <div className="form-container">
-        <h2>Login</h2>
+        <div className="icon-container">
+          <LogIn size={32} color="#6366f1" />
+        </div>
+        <h2>Welcome Back</h2>
         <form onSubmit={handleSubmit}>
-          <label>Email</label>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <label>Password</label>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit">Login</button>
+          <div>
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit">Sign In</button>
         </form>
-        <p className="redirect">Don't have an account? <a href="/signup">Signup</a></p>
+        <p className="redirect">
+          Don't have an account?{' '}
+          <a href="/signup">Sign up</a>
+        </p>
       </div>
     </div>
   );
