@@ -14,7 +14,7 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch('http://127.0.0.1:5000/auth/signup', {
+    const response = await fetch('https://web-production-0634.up.railway.app/auth/signup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,7 +26,7 @@ const Signup = () => {
 
     if (response.status === 201) {
       // Try to login automatically after successful signup
-      const loginResponse = await fetch('http://127.0.0.1:5000/auth/login', {
+      const loginResponse = await fetch('https://web-production-0634.up.railway.app/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

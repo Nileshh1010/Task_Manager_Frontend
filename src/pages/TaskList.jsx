@@ -19,7 +19,7 @@ const TaskManager = () => {
           return;
         }
 
-        const response = await fetch("http://127.0.0.1:5000/tasks/", {
+        const response = await fetch("https://web-production-0634.up.railway.app/tasks/", {
           method: "GET",
           headers: {
             Authorization: authToken,
@@ -49,7 +49,7 @@ const TaskManager = () => {
 
     const authToken = localStorage.getItem("authToken");
     try {
-      const response = await fetch("http://127.0.0.1:5000/tasks/", {
+      const response = await fetch("https://web-production-0634.up.railway.app/tasks/", {
         method: "POST",
         headers: {
           Authorization: authToken,
@@ -74,7 +74,7 @@ const TaskManager = () => {
   const handleCompleteTask = async (taskId) => {
     const authToken = localStorage.getItem("authToken");
     try {
-      const response = await fetch(`http://127.0.0.1:5000/tasks/${taskId}/complete`, {
+      const response = await fetch(`https://web-production-0634.up.railway.app/tasks/${taskId}/complete`, {
         method: "PUT",
         headers: {
           Authorization: authToken,
@@ -104,7 +104,7 @@ const TaskManager = () => {
 
     const authToken = localStorage.getItem("authToken");
     try {
-      const response = await fetch(`http://127.0.0.1:5000/tasks/${taskId}`, {
+      const response = await fetch(`https://web-production-0634.up.railway.app/tasks/${taskId}`, {
         method: "DELETE",
         headers: {
           Authorization: authToken,
