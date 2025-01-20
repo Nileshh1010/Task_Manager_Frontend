@@ -1,0 +1,80 @@
+/* Signup.css */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: white; /* Blue background */
+}
+
+.form-container {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+}
+
+h2 {
+  position: absolute;
+  top: -1.5rem; /* Adjusted for better alignment */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: hsl(0, 0%, 94%); /* White background for contrast */
+  color: #007bff; /* Blue text for better visibility */
+  padding: 0.5rem 1rem;
+  border-radius: 8px; /* Slightly more rounded */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for pop-out effect */
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #555555;
+}
+
+input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #0056b3; /* Slightly darker blue */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+button:hover {
+  background-color: #003f8a;
+  transform: scale(1.02); /* Slight scale effect */
+}
+
+.redirect {
+  text-align: center;
+  margin-top: 1rem;
+  color: #ffffff; /* White text on blue background */
+}
+
+.redirect a {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.redirect a:hover {
+  text-decoration: underline;
+}
