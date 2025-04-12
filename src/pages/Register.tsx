@@ -1,0 +1,21 @@
+
+import React from 'react';
+import RegisterForm from '@/components/auth/RegisterForm';
+
+const Register = () => {
+  return (
+    <div className="min-h-screen bg-yellow-50 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md mb-8">
+        <div className="flex items-center justify-center mb-6">
+          <div className="bg-yellow-400 rounded-full p-2 mr-2">
+            <span className="font-bold text-xl">O</span>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800">Organizo</h1>
+        </div>
+        <RegisterForm />
+      </div>
+    </div>
+  );
+};
+
+export default Register;
