@@ -56,16 +56,16 @@ const RegisterForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md bg-gray-800 border-gray-700">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">Create an Account</CardTitle>
-        <CardDescription className="text-center">Enter your details to create your Organizo account</CardDescription>
+        <CardTitle className="text-2xl font-bold text-center text-white">Create an Account</CardTitle>
+        <CardDescription className="text-center text-gray-400">Enter your details to create your Organizo account</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium">
+              <label htmlFor="username" className="text-sm font-medium text-gray-300">
                 Username
               </label>
               <Input
@@ -75,10 +75,11 @@ const RegisterForm = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
+              <label htmlFor="email" className="text-sm font-medium text-gray-300">
                 Email
               </label>
               <Input
@@ -88,10 +89,11 @@ const RegisterForm = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
+              <label htmlFor="password" className="text-sm font-medium text-gray-300">
                 Password
               </label>
               <Input
@@ -101,10 +103,11 @@ const RegisterForm = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium">
+              <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-300">
                 Confirm Password
               </label>
               <Input
@@ -114,9 +117,10 @@ const RegisterForm = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
-            <Button type="submit" className="w-full bg-yellow-400 hover:bg-yellow-500 text-black" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -130,9 +134,9 @@ const RegisterForm = () => {
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-400">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="text-purple-400 hover:underline">
             Sign in
           </Link>
         </p>

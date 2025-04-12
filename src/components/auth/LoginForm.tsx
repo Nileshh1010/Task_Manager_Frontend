@@ -41,16 +41,16 @@ const LoginForm = () => {
   };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md bg-gray-800 border-gray-700">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">Log In to Organizo</CardTitle>
-        <CardDescription className="text-center">Enter your credentials to access your account</CardDescription>
+        <CardTitle className="text-2xl font-bold text-center text-white">Log In to Organizo</CardTitle>
+        <CardDescription className="text-center text-gray-400">Enter your credentials to access your account</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
+              <label htmlFor="email" className="text-sm font-medium text-gray-300">
                 Email
               </label>
               <Input
@@ -60,14 +60,15 @@ const LoginForm = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium">
+                <label htmlFor="password" className="text-sm font-medium text-gray-300">
                   Password
                 </label>
-                <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                <Link to="/forgot-password" className="text-sm text-purple-400 hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -78,9 +79,10 @@ const LoginForm = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
-            <Button type="submit" className="w-full bg-yellow-400 hover:bg-yellow-500 text-black" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -94,9 +96,9 @@ const LoginForm = () => {
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-400">
           Don't have an account?{' '}
-          <Link to="/register" className="text-blue-600 hover:underline">
+          <Link to="/register" className="text-purple-400 hover:underline">
             Sign up
           </Link>
         </p>
