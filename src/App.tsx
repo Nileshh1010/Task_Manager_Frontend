@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/routes/ProtectedRoute";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
 // Pages
+import Home from "./pages/Home";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -25,7 +26,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
