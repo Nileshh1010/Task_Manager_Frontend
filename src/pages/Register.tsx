@@ -8,9 +8,9 @@ const Register = () => {
       <div className="w-full max-w-md mb-8">
         <div className="flex items-center justify-center mb-6">
           <div className="bg-purple-600 rounded-full p-2 mr-2">
-            <span className="font-bold text-xl text-white">O</span>
+            <span className="font-bold text-xl text-white">T</span>
           </div>
-          <h1 className="text-3xl font-bold text-white">Organizo</h1>
+          <h1 className="text-3xl font-bold text-white">Task Flow</h1>
         </div>
         <RegisterForm />
       </div>

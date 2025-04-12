@@ -9,15 +9,15 @@ const Home = () => {
       <div className="w-full max-w-4xl mb-8 text-center">
         <div className="flex items-center justify-center mb-6">
           <div className="bg-purple-600 rounded-full p-3 mr-3">
-            <span className="font-bold text-2xl text-white">O</span>
+            <span className="font-bold text-2xl text-white">T</span>
           </div>
-          <h1 className="text-4xl font-bold text-white">Organizo</h1>
+          <h1 className="text-4xl font-bold text-white">Task Flow</h1>
         </div>
         
         <div className="space-y-6 mt-8">
           <h2 className="text-3xl font-bold text-white">Task Management Made Simple</h2>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Organize your tasks, collaborate with your team, and boost your productivity with Organizo.
+            Organize your tasks, collaborate with your team, and boost your productivity with Task Flow.
           </p>
           
           <div className="flex flex-wrap justify-center gap-4 mt-8">

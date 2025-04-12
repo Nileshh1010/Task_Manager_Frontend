@@ -52,9 +52,9 @@ const Sidebar: React.FC = () => {
       <div className="flex items-center h-16 px-4 border-b">
         <div className="flex items-center">
           <div className="bg-yellow-400 rounded-full p-2 mr-2">
-            <span className="font-bold text-xl">O</span>
+            <span className="font-bold text-xl">T</span>
           </div>
-          <span className="font-bold text-xl">Organizo</span>
+          <span className="font-bold text-xl">Task Flow</span>
         </div>
       </div>
       <div className="flex-1 overflow-auto py-4 px-3">

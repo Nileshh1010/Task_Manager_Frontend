@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,9 +13,9 @@ const Index = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-yellow-400 rounded-full p-3 mr-2">
-              <span className="font-bold text-3xl">O</span>
+              <span className="font-bold text-3xl">T</span>
             </div>
-            <h1 className="text-5xl font-bold text-gray-800">Organizo</h1>
+            <h1 className="text-5xl font-bold text-gray-800">Task Flow</h1>
           </div>
           <p className="text-xl text-gray-600 max-w-lg mx-auto">
             The task management platform that helps you organize your work, track your time, and collaborate with your team.
