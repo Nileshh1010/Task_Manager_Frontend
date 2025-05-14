@@ -146,7 +146,11 @@ const Dashboard = () => {
       }
 
       const data = await response.json();
-      setCategories(data.categories || []);
+      // Filter categories to only show those belonging to the current user
+      const userCategories = data.categories.filter((category: Category) => 
+        category.user_id === JSON.parse(atob(token.split('.')[1])).user_id
+      );
+      setCategories(userCategories || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast({
@@ -452,7 +456,7 @@ const Dashboard = () => {
         {/* Tasks List Card */}
         <Card className="bg-[#1A1F2B] border-[#2A2F3B]">
           <CardHeader>
-            <CardTitle className="text-white text-xl">My tasks (02)</CardTitle>
+            <CardTitle className="text-white text-xl">My tasks ({tasks.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
