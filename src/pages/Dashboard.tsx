@@ -95,6 +95,36 @@ const Dashboard = () => {
     }
   }, [trackingHistory]);
 
+  // Load categories from localStorage on mount
+  useEffect(() => {
+    const loadCategories = () => {
+      try {
+        const savedCategories = localStorage.getItem('categories');
+        if (savedCategories) {
+          const parsedCategories = JSON.parse(savedCategories);
+          if (Array.isArray(parsedCategories)) {
+            setCategories(parsedCategories);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        setCategories([]);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Save categories to localStorage whenever they change
+  useEffect(() => {
+    try {
+      if (categories.length > 0) {
+        localStorage.setItem('categories', JSON.stringify(categories));
+      }
+    } catch (error) {
+      console.error('Error saving categories:', error);
+    }
+  }, [categories]);
+
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -317,7 +347,13 @@ const Dashboard = () => {
         throw new Error(result.message || 'Failed to create category');
       }
 
-      setCategories(prevCategories => [...prevCategories, result.category]);
+      // Update categories in state and localStorage
+      setCategories(prevCategories => {
+        const updatedCategories = [...prevCategories, result.category];
+        localStorage.setItem('categories', JSON.stringify(updatedCategories));
+        return updatedCategories;
+      });
+      
       setNewCategoryName('');
       setIsAddingCategory(false);
       
