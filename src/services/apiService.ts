@@ -103,7 +103,7 @@ export const authService = {
 
   register: async (username: string, email: string, password: string) => {
     try {
-      const response = await api.post('/auth/register', { 
+      const response = await api.post('/auth/signup', { 
         name: username, 
         email, 
         password 
