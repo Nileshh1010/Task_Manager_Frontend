@@ -47,6 +47,11 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <div className="bg-sidebar-background border-r border-sidebar-border w-64 h-screen flex flex-col">
       <div className="p-6">
@@ -88,7 +93,7 @@ const Sidebar: React.FC = () => {
 
         <div className="absolute bottom-6 left-0 w-full px-6">
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent rounded-md w-full"
           >
             <LogOut size={20} />

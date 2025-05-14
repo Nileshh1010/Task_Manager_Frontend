@@ -47,6 +47,8 @@ const Dashboard = () => {
   const [trackingHistory, setTrackingHistory] = useState<TrackingHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   // Get current date
   const currentDate = new Date();
@@ -62,6 +64,36 @@ const Dashboard = () => {
       date: new Date(currentYear, currentDate.getMonth(), i + 1)
     }))
   };
+
+  // Load tracking history from localStorage on mount
+  useEffect(() => {
+    const loadTrackingHistory = () => {
+      try {
+        const savedHistory = localStorage.getItem('trackingHistory');
+        if (savedHistory) {
+          const parsedHistory = JSON.parse(savedHistory);
+          if (Array.isArray(parsedHistory)) {
+            setTrackingHistory(parsedHistory);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading tracking history:', error);
+        setTrackingHistory([]);
+      }
+    };
+    loadTrackingHistory();
+  }, []);
+
+  // Save tracking history to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      if (trackingHistory.length > 0) {
+        localStorage.setItem('trackingHistory', JSON.stringify(trackingHistory));
+      }
+    } catch (error) {
+      console.error('Error saving tracking history:', error);
+    }
+  }, [trackingHistory]);
 
   const fetchTasks = async () => {
     try {
@@ -140,6 +172,11 @@ const Dashboard = () => {
       });
 
       if (!response.ok) {
+        // If the endpoint doesn't exist, just set empty history
+        if (response.status === 404) {
+          setTrackingHistory([]);
+          return;
+        }
         throw new Error('Failed to fetch tracking history');
       }
 
@@ -147,6 +184,8 @@ const Dashboard = () => {
       setTrackingHistory(data.history || []);
     } catch (error) {
       console.error('Error fetching tracking history:', error);
+      // Set empty history on error
+      setTrackingHistory([]);
       toast({
         title: "Error",
         description: "Failed to load tracking history",
@@ -185,14 +224,22 @@ const Dashboard = () => {
         )
       );
 
-      // Fetch updated tracking history
-      const history = await trackingService.getTrackingHistory(taskId);
-      setTrackingHistory(prevHistory => {
-        // Filter out any existing entries for this task
-        const filteredHistory = prevHistory.filter(entry => entry.task_id !== taskId);
-        // Add new entries
-        return [...filteredHistory, ...history];
-      });
+      // Create new tracking history entry
+      const completedTask = tasks.find(task => task.id === taskId);
+      if (completedTask) {
+        const newHistoryEntry: TrackingHistory = {
+          changed_at: new Date().toISOString(),
+          from: 'In Progress',
+          to: 'Completed',
+          task_id: taskId,
+          title: completedTask.title
+        };
+
+        setTrackingHistory(prevHistory => {
+          const updatedHistory = [newHistoryEntry, ...prevHistory];
+          return updatedHistory;
+        });
+      }
 
       toast({
         title: "Success",
@@ -210,24 +257,16 @@ const Dashboard = () => {
 
   const handleDeleteTask = async (taskId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch(`http://127.0.0.1:8000/tasks/${taskId}/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete task');
-      }
-
+      await taskService.deleteTask(taskId);
+      
+      // Update tasks list by removing the deleted task
       setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+
+      // Remove any tracking history entries for this task
+      setTrackingHistory(prevHistory => {
+        const updatedHistory = prevHistory.filter(entry => entry.task_id !== taskId);
+        return updatedHistory;
+      });
 
       toast({
         title: "Success",
@@ -237,7 +276,56 @@ const Dashboard = () => {
       console.error('Error deleting task:', error);
       toast({
         title: "Error",
-        description: "Failed to delete task",
+        description: error instanceof Error ? error.message : "Failed to delete task",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAddCategory = async () => {
+    try {
+      if (!newCategoryName.trim()) {
+        toast({
+          title: "Error",
+          description: "Category name cannot be empty",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
+      const response = await fetch('http://127.0.0.1:8000/categories/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: newCategoryName.trim() })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to create category');
+      }
+
+      setCategories(prevCategories => [...prevCategories, result.category]);
+      setNewCategoryName('');
+      setIsAddingCategory(false);
+      
+      toast({
+        title: "Success",
+        description: "Category created successfully"
+      });
+    } catch (error) {
+      console.error('Error creating category:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to create category',
         variant: "destructive"
       });
     }
@@ -283,6 +371,7 @@ const Dashboard = () => {
           onTaskCreated={handleTaskCreated}
           categories={categories}
           onCategoryAdded={handleCategoryAdded}
+          className="bg-purple-600 rounded-full p-2 hover:bg-purple-700 transition-colors"
         />
       </div>
 
@@ -306,21 +395,53 @@ const Dashboard = () => {
             <div className="grid grid-cols-7 gap-1 text-center">
               {monthData.days.map(({ day, date }) => {
                 const isToday = date.toDateString() === new Date().toDateString();
-                const hasTasks = tasks.some(task => {
+                const tasksForDay = tasks.filter(task => {
                   const taskDate = new Date(task.deadline);
                   return taskDate.toDateString() === date.toDateString();
                 });
+
+                // Determine the highest priority task for the day
+                const getPriorityColor = () => {
+                  if (tasksForDay.length === 0) return '';
+                  
+                  const hasHighPriority = tasksForDay.some(task => task.priority === 'High');
+                  const hasMediumPriority = tasksForDay.some(task => task.priority === 'Medium');
+                  
+                  if (hasHighPriority) return 'bg-red-700';
+                  if (hasMediumPriority) return 'bg-orange-700';
+                  return 'bg-green-700';
+                };
                 
                 return (
                   <div
                     key={day}
                     className={`p-2 rounded-md ${
                       isToday ? 'bg-yellow-500 text-black' :
-                      hasTasks ? 'bg-gray-700' :
+                      tasksForDay.length > 0 ? getPriorityColor() :
                       'hover:bg-gray-700'
-                    } cursor-pointer text-sm`}
+                    } cursor-pointer text-sm relative group`}
                   >
                     {day}
+                    {tasksForDay.length > 0 && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white opacity-75" />
+                    )}
+                    {tasksForDay.length > 0 && (
+                      <div className="absolute hidden group-hover:block bg-gray-800 p-2 rounded-md shadow-lg z-10 min-w-[200px] -translate-x-1/2 left-1/2 top-full mt-1">
+                        <div className="text-xs font-medium mb-1">Tasks for {date.toLocaleDateString()}:</div>
+                        {tasksForDay.map(task => (
+                          <div key={task.id} className="text-xs py-1 border-t border-gray-700">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${
+                                task.priority === 'High' ? 'bg-red-500' :
+                                task.priority === 'Medium' ? 'bg-orange-500' :
+                                'bg-green-500'
+                              }`} />
+                              <span>{task.title}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -405,10 +526,40 @@ const Dashboard = () => {
         <Card className="bg-[#1A1F2B] border-[#2A2F3B]">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-white text-xl">My categories (03)</CardTitle>
-              <Button variant="ghost" size="icon">
-                <Plus className="h-5 w-5 text-gray-400" />
-              </Button>
+              <CardTitle className="text-white text-xl">My categories ({categories.length})</CardTitle>
+              <Dialog open={isAddingCategory} onOpenChange={setIsAddingCategory}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+                  >
+                    <Plus className="h-5 w-5 text-gray-400" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-[#1A1F2B] border-[#2A2F3B] text-white">
+                  <DialogHeader>
+                    <DialogTitle>Add New Category</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm text-gray-400">Category Name</label>
+                      <Input
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        className="bg-[#13171F] border-[#2A2F3B] text-white"
+                        placeholder="Enter category name"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleAddCategory}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      Add Category
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </CardHeader>
           <CardContent>

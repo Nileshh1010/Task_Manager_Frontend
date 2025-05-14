@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { authService } from '@/services/apiService';
 
 interface User {
   id: string;
@@ -35,9 +36,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      // Add your login API call here
-      const mockUser = { id: '1', name: 'Test User', email };
-      setUser(mockUser);
+      const { user: userData, token } = await authService.login(email, password);
+      setUser(userData);
       setIsAuthenticated(true);
       toast({
         title: 'Success',
@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     try {
       setLoading(true);
-      // Add your register API call here
+      await authService.register(name, email, password);
       toast({
         title: 'Success',
         description: 'Registration successful',
@@ -76,12 +76,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    toast({
-      title: 'Success',
-      description: 'Logged out successfully',
-    });
+    try {
+      authService.logout();
+      setUser(null);
+      setIsAuthenticated(false);
+      toast({
+        title: 'Success',
+        description: 'Logged out successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Logout failed',
+        variant: 'destructive',
+      });
+    }
   };
 
   const value = {
