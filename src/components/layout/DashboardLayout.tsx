@@ -1,17 +1,22 @@
+import React from 'react';
+import { Outlet } from 'react-router-dom'; // This is used to render nested routes
+import { useAuth } from '@/context/AuthContext'; // Auth context to get user info
+import Sidebar from './Sidebar'; // Sidebar component
 
-import React, { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import Sidebar from './Sidebar';
-
-const DashboardLayout: React.FC = () => {
-  const { user } = useAuth();
+const DashboardLayout = () => {
+  const { user } = useAuth(); // Get user from Auth context
   
   return (
-    <div className="min-h-screen bg-gray-950 flex">
+    <div className="flex h-screen bg-background text-foreground">
+      {/* Sidebar Component */}
       <Sidebar />
-      <main className="flex-1 p-6 overflow-auto">
-        <Outlet />
+
+      <main className="flex-1 overflow-auto p-6">
+        {/* Container for the page content */}
+        <div className="max-w-6xl mx-auto">
+          {/* Outlet for nested routes */}
+          <Outlet />
+        </div>
       </main>
     </div>
   );

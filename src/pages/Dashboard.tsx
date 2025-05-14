@@ -1,12 +1,15 @@
-
 import React, { useEffect, useState } from 'react';
-import { CalendarDays, Plus } from 'lucide-react';
-import { taskService, categoryService, trackingService } from '@/services/apiService';
+import { Calendar, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast";
+import TaskForm from '@/components/tasks/TaskForm';
+import { taskService, categoryService, trackingService } from '@/services/apiService';
+import { Check as CheckIcon, Trash as TrashIcon } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// Mock data - replace with real data from API
 const monthData = {
   month: "March",
   year: 2022,
@@ -17,255 +20,469 @@ const monthData = {
 };
 
 interface Task {
-  id: string;
+  id: number;
   title: string;
-  completed: boolean;
-  dueDate: string;
+  priority: 'High' | 'Medium' | 'Low';
+  deadline: string;
+  category_id: number;
+  status: 'Upcoming' | 'In Progress' | 'Completed';
 }
 
 interface Category {
-  id: string;
+  id: number;  // Changed from string to number to match backend
   name: string;
-  users: { id: string; username: string }[];
+  user_id: number;  // Added to match backend
 }
 
 interface Tracking {
   id: string;
+  taskId: number;
   title: string;
   duration: string;
+  status: string;
+}
+
+interface TrackingHistory {
+  changed_at: string;
+  from: string;
+  to: string;
+  task_id: number;
+  title: string;
 }
 
 const Dashboard = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [trackings, setTrackings] = useState<Tracking[]>([]);
+  const [trackingHistory, setTrackingHistory] = useState<TrackingHistory[]>([]);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newTask, setNewTask] = useState({
+    title: '',
+    priority: 'Medium',
+    deadline: '',
+    category_id: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        const [tasksData, categoriesData, trackingsData] = await Promise.all([
-          taskService.getAllTasks(),
-          categoryService.getAllCategories(),
-          trackingService.getAllTrackings()
-        ]);
-        
-        setTasks(tasksData);
-        setCategories(categoriesData);
-        setTrackings(trackingsData);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load dashboard data. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
+  const fetchTaskTracking = async (taskId?: number) => {
+    try {
+      if (!taskId && !selectedTaskId) return;
+      const targetTaskId = taskId || selectedTaskId!;
+      
+      const history = await trackingService.getTrackingHistory(targetTaskId);
+      setTrackingHistory(history);
+    } catch (error) {
+      console.error('Error fetching task tracking:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to load task history",
+        variant: "destructive"
+      });
+      setTrackingHistory([]);
+    }
+  };
+
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      const [tasksData, categoriesData] = await Promise.all([
+        taskService.getAllTasks(),
+        categoryService.getAllCategories(),
+      ]);
+
+      setTasks(tasksData);
+      setCategories(categoriesData);
+      
+      // Only fetch tracking if there's a selected task
+      if (selectedTaskId) {
+        await fetchTaskTracking(selectedTaskId);
       }
-    };
-    
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDashboardData();
   }, [toast]);
 
+  const handleTaskSelection = async (taskId: number) => {
+    try {
+      setSelectedTaskId(taskId);
+      const history = await trackingService.getTrackingHistory(taskId);
+      setTrackingHistory(history);
+    } catch (error) {
+      console.error('Error fetching task tracking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load task history",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleTrackStatus = async (taskId: number, status: string) => {
+    try {
+      await trackingService.trackStatus(taskId, { status });
+      await fetchTaskTracking(taskId);
+      toast({
+        title: "Success",
+        description: "Task status updated successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://127.0.0.1:8000/tasks/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...newTask,
+          category_id: parseInt(newTask.category_id),
+          status: 'Upcoming'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create task');
+      }
+
+      const data = await response.json();
+      toast({
+        title: "Success",
+        description: data.message,
+      });
+      
+      // Reset form and close dialog
+      setNewTask({ title: '', priority: 'Medium', deadline: '', category_id: '' });
+      setIsDialogOpen(false);
+      // Refresh tasks
+      fetchTasks();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create task",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    try {
+      const name = prompt('Enter category name:');
+      if (!name) return;
+
+      const newCategory = await categoryService.createCategory(name);
+      setCategories(prevCategories => [...prevCategories, newCategory]);
+      toast({
+        title: "Success",
+        description: "Category created successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create category",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleTaskComplete = async (taskId: number) => {
+    try {
+      await taskService.completeTask(taskId);
+      
+      // Update task status locally
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId 
+            ? { ...task, status: 'Completed' as const }
+            : task
+        )
+      );
+
+      // Store completed status in localStorage
+      const completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '[]');
+      if (!completedTasks.includes(taskId)) {
+        completedTasks.push(taskId);
+        localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+      }
+
+      // Refresh tracking history
+      await fetchTaskTracking(taskId);
+
+      toast({
+        title: "Success",
+        description: "Task marked as complete"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to complete task",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteTask = async (taskId: number) => {
+    try {
+      await taskService.deleteTask(taskId);
+      // Remove the deleted task from state
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+      toast({
+        title: "Success",
+        description: "Task deleted successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete task",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleTaskCreated = async (newTask: any) => {
+    // Update tasks list with the new task
+    setTasks(prevTasks => [...prevTasks, newTask]);
+    // Optionally refresh the entire tasks list
+    await fetchTasks();
+  };
+
+  const handleCategoryAdded = (newCategory: Category) => {
+    setCategories(prevCategories => [...prevCategories, newCategory]);
+  };
+
+  const TrackingHistorySection = () => (
+    <Card className="col-span-1">
+      <CardHeader>
+        <CardTitle>Status History</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {trackingHistory.length === 0 ? (
+          <div className="text-center text-gray-500">No status changes recorded</div>
+        ) : (
+          <div className="space-y-2">
+            {trackingHistory.map((entry, index) => (
+              <div 
+                key={`${entry.task_id}-${index}`}
+                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+              >
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{entry.title}</span>
+                  <span className="text-xs text-gray-600">
+                    {entry.from} → {entry.to}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500">
+                  {new Date(entry.changed_at).toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <Button className="bg-yellow-400 hover:bg-yellow-500 text-black">
-          <Plus className="h-4 w-4 mr-2" />
-          New task
-        </Button>
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+        <TaskForm 
+          onTaskCreated={handleTaskCreated}
+          categories={categories}
+          onCategoryAdded={handleCategoryAdded}
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Calendar Section */}
-        <Card className="col-span-1">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle>{monthData.month} {monthData.year}</CardTitle>
-              <div className="flex space-x-1">
-                <Button variant="outline" size="icon" className="h-8 w-8">
-                  <CalendarDays className="h-4 w-4" />
-                </Button>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Calendar Card */}
+        <Card className="bg-[#1A1F2B] border-[#2A2F3B]">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-white text-xl">March 2022</CardTitle>
+              <Button variant="ghost" size="icon">
+                <Calendar className="h-5 w-5 text-gray-400" />
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-7 text-center text-xs font-medium">
-              <div>Mo</div>
-              <div>Tu</div>
-              <div>We</div>
-              <div>Th</div>
-              <div>Fr</div>
-              <div>Sa</div>
-              <div>Su</div>
+            <div className="grid grid-cols-7 gap-1 text-center mb-2">
+              {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(day => (
+                <div key={day} className="text-sm text-gray-400">{day}</div>
+              ))}
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center mt-2">
-              {[...Array(31)].map((_, index) => {
-                const day = index + 1;
-                const isActiveDay = day === 3;
+            <div className="grid grid-cols-7 gap-1 text-center">
+              {monthData.days.map(({ day, date }) => (
+                <div
+                  key={day}
+                  className={`p-2 rounded-md ${
+                    day === 3 ? 'bg-yellow-500 text-black' :
+                    day === 20 ? 'bg-gray-700' :
+                    'hover:bg-gray-700'
+                  } cursor-pointer text-sm`}
+                >
+                  {day}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-                return (
-                  <div
-                    key={day}
-                    className={`p-2 rounded-full text-sm ${
-                      isActiveDay
-                        ? "bg-yellow-400 text-black font-bold"
-                        : "hover:bg-gray-100 cursor-pointer"
-                    }`}
+        {/* Tasks List Card */}
+        <Card className="bg-[#1A1F2B] border-[#2A2F3B]">
+          <CardHeader>
+            <CardTitle className="text-white text-xl">My tasks (02)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-2">
+                {[...Array(3)].map((_, idx) => (
+                  <div key={idx} className="h-8 bg-slate-800/50 rounded animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {tasks.map(task => (
+                  <div 
+                    key={task.id} 
+                    className="flex items-center justify-between p-2 bg-slate-800/50 rounded-lg hover:bg-slate-800 cursor-pointer transition-colors"
+                    onClick={() => handleTaskSelection(task.id)}
                   >
-                    {day}
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        task.priority === 'High' ? 'bg-red-500' : 
+                        task.priority === 'Medium' ? 'bg-yellow-500' : 
+                        'bg-green-500'
+                      }`} />
+                      <span className={`text-slate-200 ${task.status === 'Completed' ? 'line-through text-slate-500' : ''}`}>
+                        {task.title}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm">
+                      <span className="text-slate-400">{new Date(task.deadline).toLocaleDateString()}</span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        task.status === 'Completed' ? 'bg-green-900/50 text-green-300' :
+                        task.status === 'In Progress' ? 'bg-yellow-900/50 text-yellow-300' :
+                        'bg-blue-900/50 text-blue-300'
+                      }`}>
+                        {task.status}
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTaskComplete(task.id);
+                          }}
+                          className="text-green-400 hover:text-green-300"
+                        >
+                          <CheckIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTask(task.id);
+                          }}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tasks Section */}
-        <Card className="col-span-1">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle>My tasks (05)</CardTitle>
-              <Button variant="ghost" size="sm" className="text-gray-500">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                <div className="h-8 bg-gray-100 rounded animate-pulse" />
-                <div className="h-8 bg-gray-100 rounded animate-pulse" />
-                <div className="h-8 bg-gray-100 rounded animate-pulse" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2 py-2">
-                  <div className="bg-yellow-100 border border-yellow-300 rounded-full p-0.5">
-                    <svg className="h-4 w-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className="line-through text-gray-500">Finish monthly reporting</span>
-                  <span className="ml-auto text-xs text-yellow-600 font-medium">Today</span>
-                </div>
-                <div className="flex items-center space-x-2 py-2">
-                  <div className="bg-white border border-gray-300 rounded-full p-0.5">
-                    <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span>Contract signing</span>
-                  <span className="ml-auto text-xs text-yellow-600 font-medium">Today</span>
-                </div>
-                <div className="flex items-center space-x-2 py-2">
-                  <div className="bg-white border border-gray-300 rounded-full p-0.5">
-                    <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span>Market overview keynote</span>
-                  <span className="ml-auto text-xs text-gray-500">Tomorrow</span>
-                </div>
+                ))}
               </div>
             )}
           </CardContent>
         </Card>
+      </div>
 
-        {/* Categories Section */}
-        <Card className="col-span-1">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle>My categories</CardTitle>
-              <Button variant="ghost" size="sm" className="text-gray-500">
-                <Plus className="h-4 w-4" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Categories Card */}
+        <Card className="bg-[#1A1F2B] border-[#2A2F3B]">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-white text-xl">My categories (03)</CardTitle>
+              <Button variant="ghost" size="icon">
+                <Plus className="h-5 w-5 text-gray-400" />
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <span>Work</span>
-                  </div>
-                  <div className="flex -space-x-2">
-                    <div className="h-6 w-6 rounded-full bg-blue-500 border-2 border-white"></div>
-                    <div className="h-6 w-6 rounded-full bg-green-500 border-2 border-white"></div>
-                  </div>
+            <div className="space-y-2">
+              {categories.map((category) => (
+                <div
+                  key={category.id}
+                  className="flex items-center justify-between p-3 bg-[#13171F] rounded-lg"
+                >
+                  <span className="text-white">{category.name}</span>
+                  <span className="text-gray-400 text-sm">0 tasks</span>
                 </div>
-                <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <span>Family</span>
-                  </div>
-                  <div className="flex -space-x-2">
-                    <div className="h-6 w-6 rounded-full bg-red-500 border-2 border-white"></div>
-                    <div className="h-6 w-6 rounded-full bg-yellow-500 border-2 border-white"></div>
-                    <div className="h-6 w-6 rounded-full bg-green-500 border-2 border-white"></div>
-                  </div>
-                </div>
-              </div>
-            )}
+              ))}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Tracking Section */}
-        <Card className="col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle>My tracking</CardTitle>
+        {/* Status History Card */}
+        <Card className="bg-[#1A1F2B] border-[#2A2F3B] md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-white text-xl">Status History</CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
+            {trackingHistory.length === 0 ? (
+              <div className="text-center text-gray-500">
+                No status changes recorded
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="h-8 w-8 bg-gray-200 rounded-full flex items-center justify-center">
-                      <CalendarDays className="h-4 w-4 text-gray-600" />
+                {trackingHistory.map((entry, index) => (
+                  <div 
+                    key={`${entry.task_id}-${index}`}
+                    className="flex items-center justify-between p-2 bg-[#13171F] rounded-lg"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-white">
+                        {entry.title}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {entry.from} → {entry.to}
+                      </span>
                     </div>
-                    <span>Create wireframe</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(entry.changed_at).toLocaleString()}
+                    </span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm">1h 25m 30s</span>
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">Play</span>
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      </svg>
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="h-8 w-8 bg-gray-200 rounded-full flex items-center justify-center">
-                      <CalendarDays className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <span>Slack logo design</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm">30m 18s</span>
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">Play</span>
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      </svg>
-                    </Button>
-                  </div>
-                </div>
+                ))}
               </div>
             )}
           </CardContent>

@@ -25,42 +25,42 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: 'hsl(221.2 83.2% 53.3%)',  // Changed to blue
+					foreground: 'hsl(210 40% 98%)'
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					DEFAULT: 'hsl(217.2 32.6% 17.5%)',
+					foreground: 'hsl(210 40% 98%)'
 				},
 				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
+					DEFAULT: 'hsl(0 62.8% 30.6%)',
+					foreground: 'hsl(210 40% 98%)'
 				},
 				muted: {
-					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))'
+					DEFAULT: 'hsl(217.2 32.6% 17.5%)',
+					foreground: 'hsl(215 20.2% 65.1%)'
 				},
 				accent: {
-					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))'
+					DEFAULT: 'hsl(217.2 32.6% 17.5%)',
+					foreground: 'hsl(210 40% 98%)'
 				},
 				popover: {
-					DEFAULT: 'hsl(var(--popover))',
-					foreground: 'hsl(var(--popover-foreground))'
+					DEFAULT: 'hsl(222.2 84% 4.9%)',
+					foreground: 'hsl(210 40% 98%)'
 				},
 				card: {
-					DEFAULT: 'hsl(var(--card))',
-					foreground: 'hsl(var(--card-foreground))'
+					DEFAULT: 'hsl(222.2 47.4% 11.2%)',
+					foreground: 'hsl(210 40% 98%)'
 				},
 				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+					DEFAULT: 'hsl(222.2 47.4% 11.2%)',
+					foreground: 'hsl(210 40% 98%)',
+					primary: 'hsl(221.2 83.2% 53.3%)',  // Changed to blue
+					'primary-foreground': 'hsl(210 40% 98%)',
+					accent: 'hsl(217.2 32.6% 17.5%)',
+					'accent-foreground': 'hsl(210 40% 98%)',
+					border: 'hsl(217.2 32.6% 17.5%)',
+					ring: 'hsl(221.2 83.2% 53.3%)'      // Changed to blue
 				}
 			},
 			borderRadius: {

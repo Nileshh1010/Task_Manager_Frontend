@@ -1,96 +1,56 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 225 30% 10%; /* Dark background */
+    --foreground: 0 0% 100%;    /* White text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 225 30% 12%;        /* Dark card background */
+    --card-foreground: 0 0% 100%; /* White text for card */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 225 30% 12%;     /* Dark popover */
+    --popover-foreground: 0 0% 100%; /* White text for popover */
 
-    --primary: 47 100% 50%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 267 75% 60%;     /* Purple */
+    --primary-foreground: 0 0% 100%; /* White text for primary elements */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 225 30% 16%;   /* Dark secondary background */
+    --secondary-foreground: 0 0% 90%; /* Light gray text for secondary elements */
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 225 30% 16%;       /* Muted background */
+    --muted-foreground: 0 0% 70%; /* Light muted text */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 267 75% 60%;      /* Accent color (purple) */
+    --accent-foreground: 0 0% 100%; /* White text for accents */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%; /* Red for destructive actions */
+    --destructive-foreground: 0 0% 98%; /* White text for destructive elements */
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 47 100% 50%;
+    --border: 225 30% 20%;      /* Dark border color */
+    --input: 225 30% 20%;       /* Input background */
+    --ring: 267 75% 60%;        /* Focus ring color */
 
-    --radius: 0.5rem;
+    --radius: 0.5rem;           /* Border radius */
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 47 100% 50%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 47 100% 95%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 47 100% 50%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 47 90% 50%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 47 90% 50%;
-    
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 47 90% 50%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 47 90% 50%;
+    --sidebar-background: 225 30% 12%; /* Dark sidebar background */
+    --sidebar-foreground: 0 0% 90%; /* Light text for sidebar */
+    --sidebar-primary: 267 75% 60%; /* Sidebar primary (purple) */
+    --sidebar-primary-foreground: 0 0% 100%; /* White text in sidebar primary */
+    --sidebar-accent: 225 30% 16%; /* Dark sidebar accent */
+    --sidebar-accent-foreground: 0 0% 90%; /* Light text in sidebar accent */
+    --sidebar-border: 225 30% 20%; /* Dark sidebar border */
+    --sidebar-ring: 267 75% 60%;  /* Sidebar focus ring color */
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border; /* Apply border color globally */
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground; /* Set background and text color */
   }
 }

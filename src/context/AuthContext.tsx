@@ -1,11 +1,9 @@
-
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authService } from '../services/apiService';
-import { useToast } from "@/hooks/use-toast";
+import React, { createContext, useContext, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface User {
   id: string;
-  username: string;
+  name: string;
   email: string;
 }
 
@@ -13,63 +11,43 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  login: async () => {},
-  register: async () => {},
-  logout: () => {},
-  isAuthenticated: false
-});
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
-
-  // Check if user is already logged in on mount
-  useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const currentUser = authService.getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-          setIsAuthenticated(true);
-        }
-      } catch (error) {
-        console.error('Authentication check failed:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
 
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const data = await authService.login(email, password);
-      setUser(data.user);
+      // Add your login API call here
+      const mockUser = { id: '1', name: 'Test User', email };
+      setUser(mockUser);
       setIsAuthenticated(true);
       toast({
-        title: "Login successful",
-        description: `Welcome back, ${data.user.username}!`
+        title: 'Success',
+        description: 'Logged in successfully',
       });
     } catch (error) {
-      console.error('Login failed:', error);
       toast({
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Login failed',
+        variant: 'destructive',
       });
       throw error;
     } finally {
@@ -77,20 +55,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (username: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string) => {
     try {
       setLoading(true);
-      await authService.register(username, email, password);
+      // Add your register API call here
       toast({
-        title: "Registration successful",
-        description: "You can now log in with your new account."
+        title: 'Success',
+        description: 'Registration successful',
       });
     } catch (error) {
-      console.error('Registration failed:', error);
       toast({
-        title: "Registration failed",
-        description: "There was a problem creating your account.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Registration failed',
+        variant: 'destructive',
       });
       throw error;
     } finally {
@@ -99,12 +76,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    authService.logout();
     setUser(null);
     setIsAuthenticated(false);
     toast({
-      title: "Logged out",
-      description: "You have been successfully logged out."
+      title: 'Success',
+      description: 'Logged out successfully',
     });
   };
 
@@ -114,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     register,
     logout,
-    isAuthenticated
+    isAuthenticated,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

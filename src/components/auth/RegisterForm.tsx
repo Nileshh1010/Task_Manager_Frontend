@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -9,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from 'lucide-react';
 
 const RegisterForm = () => {
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,7 +20,7 @@ const RegisterForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !email || !password || !confirmPassword) {
+    if (!name || !email || !password || !confirmPassword) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -41,11 +40,7 @@ const RegisterForm = () => {
 
     try {
       setIsSubmitting(true);
-      await register(username, email, password);
-      toast({
-        title: "Success",
-        description: "Registration successful. Please log in.",
-      });
+      await register(name, email, password);
       navigate('/login');
     } catch (error) {
       console.error('Registration error:', error);
@@ -59,29 +54,25 @@ const RegisterForm = () => {
     <Card className="w-full max-w-md bg-gray-800 border-gray-700">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center text-white">Create an Account</CardTitle>
-        <CardDescription className="text-center text-gray-400">Enter your details to create your Organizo account</CardDescription>
+        <CardDescription className="text-center text-gray-400">Enter your details to create your account</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium text-gray-300">
-                Username
-              </label>
+              <label htmlFor="name" className="text-sm font-medium text-gray-300">Full Name</label>
               <Input
-                id="username"
+                id="name"
                 type="text"
-                placeholder="johnsmith"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="John Smith"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
                 className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-300">
-                Email
-              </label>
+              <label htmlFor="email" className="text-sm font-medium text-gray-300">Email</label>
               <Input
                 id="email"
                 type="email"
@@ -93,9 +84,7 @@ const RegisterForm = () => {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-300">
-                Password
-              </label>
+              <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
               <Input
                 id="password"
                 type="password"
@@ -107,9 +96,7 @@ const RegisterForm = () => {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-300">
-                Confirm Password
-              </label>
+              <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-300">Confirm Password</label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -127,7 +114,7 @@ const RegisterForm = () => {
                   Creating account...
                 </>
               ) : (
-                "Sign Up"
+                "Create Account"
               )}
             </Button>
           </div>
