@@ -10,15 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const monthData = {
-  month: "March",
-  year: 2022,
-  days: Array.from({ length: 31 }, (_, i) => ({
-    day: i + 1,
-    date: new Date(2022, 2, i + 1)
-  }))
-};
-
 interface Task {
   id: number;
   title: string;
@@ -51,60 +42,52 @@ interface TrackingHistory {
 }
 
 const Dashboard = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [trackings, setTrackings] = useState<Tracking[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [trackingHistory, setTrackingHistory] = useState<TrackingHistory[]>([]);
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newTask, setNewTask] = useState({
-    title: '',
-    priority: 'Medium',
-    deadline: '',
-    category_id: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const fetchTaskTracking = async (taskId?: number) => {
-    try {
-      if (!taskId && !selectedTaskId) return;
-      const targetTaskId = taskId || selectedTaskId!;
-      
-      const history = await trackingService.getTrackingHistory(targetTaskId);
-      setTrackingHistory(history);
-    } catch (error) {
-      console.error('Error fetching task tracking:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to load task history",
-        variant: "destructive"
-      });
-      setTrackingHistory([]);
-    }
+  // Get current date
+  const currentDate = new Date();
+  const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
+  const currentYear = currentDate.getFullYear();
+  const daysInMonth = new Date(currentYear, currentDate.getMonth() + 1, 0).getDate();
+
+  const monthData = {
+    month: currentMonth,
+    year: currentYear,
+    days: Array.from({ length: daysInMonth }, (_, i) => ({
+      day: i + 1,
+      date: new Date(currentYear, currentDate.getMonth(), i + 1)
+    }))
   };
 
-  const fetchDashboardData = async () => {
+  const fetchTasks = async () => {
     try {
-      setIsLoading(true);
-      const [tasksData, categoriesData] = await Promise.all([
-        taskService.getAllTasks(),
-        categoryService.getAllCategories(),
-      ]);
-
-      setTasks(tasksData);
-      setCategories(categoriesData);
-      
-      // Only fetch tracking if there's a selected task
-      if (selectedTaskId) {
-        await fetchTaskTracking(selectedTaskId);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
       }
+
+      const response = await fetch('http://127.0.0.1:8000/tasks/', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch tasks');
+      }
+
+      const data = await response.json();
+      setTasks(data.tasks || []);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error fetching tasks:', error);
       toast({
         title: "Error",
-        description: "Failed to load dashboard data",
+        description: "Failed to load tasks",
         variant: "destructive"
       });
     } finally {
@@ -112,138 +95,114 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [toast]);
-
-  const handleTaskSelection = async (taskId: number) => {
-    try {
-      setSelectedTaskId(taskId);
-      const history = await trackingService.getTrackingHistory(taskId);
-      setTrackingHistory(history);
-    } catch (error) {
-      console.error('Error fetching task tracking:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load task history",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleTrackStatus = async (taskId: number, status: string) => {
-    try {
-      await trackingService.trackStatus(taskId, { status });
-      await fetchTaskTracking(taskId);
-      toast({
-        title: "Success",
-        description: "Task status updated successfully"
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update task status",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
+  const fetchCategories = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://127.0.0.1:8000/tasks/', {
-        method: 'POST',
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('http://127.0.0.1:8000/categories/', {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          ...newTask,
-          category_id: parseInt(newTask.category_id),
-          status: 'Upcoming'
-        })
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create task');
+        throw new Error('Failed to fetch categories');
       }
 
       const data = await response.json();
-      toast({
-        title: "Success",
-        description: data.message,
-      });
-      
-      // Reset form and close dialog
-      setNewTask({ title: '', priority: 'Medium', deadline: '', category_id: '' });
-      setIsDialogOpen(false);
-      // Refresh tasks
-      fetchTasks();
+      setCategories(data.categories || []);
     } catch (error) {
+      console.error('Error fetching categories:', error);
       toast({
         title: "Error",
-        description: "Failed to create task",
+        description: "Failed to load categories",
         variant: "destructive"
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const handleCreateCategory = async () => {
+  const fetchTrackingHistory = async () => {
     try {
-      const name = prompt('Enter category name:');
-      if (!name) return;
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
 
-      const newCategory = await categoryService.createCategory(name);
-      setCategories(prevCategories => [...prevCategories, newCategory]);
-      toast({
-        title: "Success",
-        description: "Category created successfully"
+      const response = await fetch('http://127.0.0.1:8000/tracking/history/', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch tracking history');
+      }
+
+      const data = await response.json();
+      setTrackingHistory(data.history || []);
     } catch (error) {
+      console.error('Error fetching tracking history:', error);
       toast({
         title: "Error",
-        description: "Failed to create category",
+        description: "Failed to load tracking history",
         variant: "destructive"
       });
     }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+    fetchCategories();
+    fetchTrackingHistory();
+  }, []);
+
+  const handleTaskCreated = async (newTask: Task) => {
+    setTasks(prevTasks => [...prevTasks, newTask]);
+  };
+
+  const handleCategoryAdded = async (newCategory: Category) => {
+    setCategories(prevCategories => [...prevCategories, newCategory]);
+  };
+
+  const handleTaskSelection = (taskId: number) => {
+    // Implement task selection logic here
+    console.log('Task selected:', taskId);
   };
 
   const handleTaskComplete = async (taskId: number) => {
     try {
       await taskService.completeTask(taskId);
       
-      // Update task status locally
-      setTasks(prevTasks => 
-        prevTasks.map(task => 
-          task.id === taskId 
-            ? { ...task, status: 'Completed' as const }
-            : task
+      // Update tasks list
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === taskId ? { ...task, status: 'Completed' } : task
         )
       );
 
-      // Store completed status in localStorage
-      const completedTasks = JSON.parse(localStorage.getItem('completedTasks') || '[]');
-      if (!completedTasks.includes(taskId)) {
-        completedTasks.push(taskId);
-        localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
-      }
-
-      // Refresh tracking history
-      await fetchTaskTracking(taskId);
+      // Fetch updated tracking history
+      const history = await trackingService.getTrackingHistory(taskId);
+      setTrackingHistory(prevHistory => {
+        // Filter out any existing entries for this task
+        const filteredHistory = prevHistory.filter(entry => entry.task_id !== taskId);
+        // Add new entries
+        return [...filteredHistory, ...history];
+      });
 
       toast({
         title: "Success",
-        description: "Task marked as complete"
+        description: "Task marked as completed",
       });
     } catch (error) {
+      console.error('Error completing task:', error);
       toast({
         title: "Error",
-        description: "Failed to complete task",
+        description: error instanceof Error ? error.message : "Failed to complete task",
         variant: "destructive"
       });
     }
@@ -251,31 +210,37 @@ const Dashboard = () => {
 
   const handleDeleteTask = async (taskId: number) => {
     try {
-      await taskService.deleteTask(taskId);
-      // Remove the deleted task from state
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`http://127.0.0.1:8000/tasks/${taskId}/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete task');
+      }
+
       setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+
       toast({
         title: "Success",
-        description: "Task deleted successfully"
+        description: "Task deleted successfully",
       });
     } catch (error) {
+      console.error('Error deleting task:', error);
       toast({
         title: "Error",
         description: "Failed to delete task",
         variant: "destructive"
       });
     }
-  };
-
-  const handleTaskCreated = async (newTask: any) => {
-    // Update tasks list with the new task
-    setTasks(prevTasks => [...prevTasks, newTask]);
-    // Optionally refresh the entire tasks list
-    await fetchTasks();
-  };
-
-  const handleCategoryAdded = (newCategory: Category) => {
-    setCategories(prevCategories => [...prevCategories, newCategory]);
   };
 
   const TrackingHistorySection = () => (
@@ -326,7 +291,7 @@ const Dashboard = () => {
         <Card className="bg-[#1A1F2B] border-[#2A2F3B]">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-white text-xl">March 2022</CardTitle>
+              <CardTitle className="text-white text-xl">{monthData.month} {monthData.year}</CardTitle>
               <Button variant="ghost" size="icon">
                 <Calendar className="h-5 w-5 text-gray-400" />
               </Button>
@@ -339,18 +304,26 @@ const Dashboard = () => {
               ))}
             </div>
             <div className="grid grid-cols-7 gap-1 text-center">
-              {monthData.days.map(({ day, date }) => (
-                <div
-                  key={day}
-                  className={`p-2 rounded-md ${
-                    day === 3 ? 'bg-yellow-500 text-black' :
-                    day === 20 ? 'bg-gray-700' :
-                    'hover:bg-gray-700'
-                  } cursor-pointer text-sm`}
-                >
-                  {day}
-                </div>
-              ))}
+              {monthData.days.map(({ day, date }) => {
+                const isToday = date.toDateString() === new Date().toDateString();
+                const hasTasks = tasks.some(task => {
+                  const taskDate = new Date(task.deadline);
+                  return taskDate.toDateString() === date.toDateString();
+                });
+                
+                return (
+                  <div
+                    key={day}
+                    className={`p-2 rounded-md ${
+                      isToday ? 'bg-yellow-500 text-black' :
+                      hasTasks ? 'bg-gray-700' :
+                      'hover:bg-gray-700'
+                    } cursor-pointer text-sm`}
+                  >
+                    {day}
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

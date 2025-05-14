@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,14 @@ interface TaskFormData {
 
 const TaskForm = ({ onTaskCreated, categories, onCategoryAdded }: TaskFormProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const { control, register, handleSubmit, reset } = useForm<TaskFormData>();
+  const { control, handleSubmit, reset } = useForm<TaskFormData>({
+    defaultValues: {
+      title: '',
+      priority: 'Medium',
+      deadline: '',
+      category_id: ''
+    }
+  });
   const { toast } = useToast();
 
   const onSubmit = async (data: TaskFormData) => {
@@ -84,49 +91,83 @@ const TaskForm = ({ onTaskCreated, categories, onCategoryAdded }: TaskFormProps)
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Title</label>
-            <Input
-              {...register('title', { required: true })}
-              className="bg-[#13171F] border-[#2A2F3B] text-white"
-              placeholder="Enter task title"
+            <Controller
+              name="title"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  className="bg-[#13171F] border-[#2A2F3B] text-white"
+                  placeholder="Enter task title"
+                />
+              )}
             />
           </div>
           
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Category</label>
-            <Select {...register('category_id', { required: true })}>
-              <SelectTrigger className="bg-[#13171F] border-[#2A2F3B] text-white">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1A1F2B] border-[#2A2F3B]">
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Controller
+              name="category_id"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger className="bg-[#13171F] border-[#2A2F3B] text-white">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1A1F2B] border-[#2A2F3B]">
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Priority</label>
-            <Select {...register('priority', { required: true })}>
-              <SelectTrigger className="bg-[#13171F] border-[#2A2F3B] text-white">
-                <SelectValue defaultValue="Medium" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1A1F2B] border-[#2A2F3B]">
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="Low">Low</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              name="priority"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger className="bg-[#13171F] border-[#2A2F3B] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1A1F2B] border-[#2A2F3B]">
+                    <SelectItem value="High">High</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="Low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm text-gray-400">Deadline</label>
-            <Input
-              type="date"
-              {...register('deadline', { required: true })}
-              className="bg-[#13171F] border-[#2A2F3B] text-white"
+            <Controller
+              name="deadline"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <Input
+                  type="date"
+                  {...field}
+                  className="bg-[#13171F] border-[#2A2F3B] text-white"
+                />
+              )}
             />
           </div>
 
